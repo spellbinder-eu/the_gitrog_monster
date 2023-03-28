@@ -1,0 +1,15 @@
+[package]
+name = "spellbinder_metacard_updater"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cuid = "1.3.1"
+dotenv = "0.15.0"
+json = "0.12.4"
+reqwest = { version = "0.11.16", features = ["json"] }
+scryfall = "0.12.4"
+sqlx = { version = "0.6.3", features = [ "runtime-tokio-rustls", "mysql"] }
+tokio = { version = "1.26.0", features = ["full"] }
