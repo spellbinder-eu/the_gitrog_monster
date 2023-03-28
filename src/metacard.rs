@@ -8,13 +8,13 @@ struct MetaCard {
     scryfallId: String,
 }
 
-pub async fn upsert_card(card: &Card, pool: &MySqlPool) -> () {
+pub async fn upsert_card(card: &Card, expansion_id: &String, pool: &MySqlPool) -> () {
     let scryfall_id = &card.id.as_hyphenated().to_string();
 
     let meta_card = fetch_card(scryfall_id, &pool).await.unwrap();
 
     if meta_card.scryfallId.is_empty() {
-        create_card(&card, &pool).await.unwrap();
+        create_card(&card, &expansion_id, &pool).await.unwrap();
     } else {
         update_card(&card, &pool).await.unwrap();
     }
@@ -31,7 +31,11 @@ async fn fetch_card(scryfall_id: &String, pool: &MySqlPool) -> Result<MetaCard, 
     Ok(metacard.unwrap_or_default())
 }
 
-async fn create_card(card: &Card, pool: &MySqlPool) -> Result<u64, Box<dyn Error>> {
+async fn create_card(
+    card: &Card,
+    expansion_id: &String,
+    pool: &MySqlPool,
+) -> Result<u64, Box<dyn Error>> {
     let query = "
         INSERT INTO metacard
         (id, scryfallId, cardmarketId, name, scryfallUri, imageUri, reserved, expansionId, collectorsNum, price, foilPrice)
@@ -51,7 +55,6 @@ async fn create_card(card: &Card, pool: &MySqlPool) -> Result<u64, Box<dyn Error
     let scryfall_uri = card.scryfall_uri.to_string();
     let image_uri = card.image_uris["small"].to_string();
     let reserved = &card.reserved;
-    let expansion_id = "tz4a98xxat96iws9zmbrgj3a";
     let collector_number = &card.collector_number;
     let price = card.prices.eur.as_ref().unwrap_or(&default_price);
     let foil_price = card.prices.eur_foil.as_ref().unwrap_or(&default_price);
