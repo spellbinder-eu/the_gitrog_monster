@@ -40,17 +40,31 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let mut set_code_to_expansion_id = HashMap::<String, String>::new();
 
+    let opt_expansions = crate::expansion::preload_expansions(&pool).await.ok();
+    if opt_expansions.is_some() {
+        let expansions = opt_expansions.unwrap();
+
+        for expansion in expansions {
+            set_code_to_expansion_id.insert(expansion.code, expansion.id);
+        }
+    }
+
     let opt_sets = get_sets().await;
     if opt_sets.is_some() {
         let sets = opt_sets.unwrap();
 
-        for set in sets {
+        for set in sets.iter() {
+            let set_code = set.code.to_string();
+
+            if set_code_to_expansion_id.contains_key(&set_code) {
+                continue;
+            }
+
             let id = match crate::expansion::upsert_expansion(&set, &pool).await {
-                Some(code) => code,
-                None => String::default(),
+                Ok(code) => code,
+                Err(_) => panic!("Expansion id not returned"),
             };
 
-            let set_code = set.code.to_string();
             set_code_to_expansion_id.insert(set_code, id);
         }
     }
