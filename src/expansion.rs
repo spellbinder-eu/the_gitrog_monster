@@ -16,10 +16,11 @@ pub async fn upsert_expansion(set: &Set, pool: &MySqlPool) -> Result<String, Box
 
     if expansion.id.is_empty() {
         let result = create_expansion(&set, &pool).await;
-        return result.ok();
+        return result;
     }
 
-    let id = expansion.id;
+    Ok(expansion.id)
+}
 
     Some(id)
 }
@@ -41,7 +42,6 @@ async fn create_expansion(set: &Set, pool: &MySqlPool) -> Result<String, Box<dyn
         (`id`, `scryfallId`, `name`, `code`)
         VALUES
         (?, ?, ?, ?);
-        SELECT LAST_INSERT_ID();
     ";
 
     let id = cuid::cuid2();
@@ -49,20 +49,15 @@ async fn create_expansion(set: &Set, pool: &MySqlPool) -> Result<String, Box<dyn
     let name = &set.name;
     let code = set.code.to_string();
 
-    let query_result = sqlx::query_as::<_, Expansion>(query)
-        .bind(id)
+    sqlx::query(query)
+        .bind(&id)
         .bind(scryfall_id)
         .bind(name)
         .bind(code)
-        .fetch_optional(pool)
+        .execute(pool)
         .await?;
 
-    let expansion = match query_result {
-        Some(expansion) => expansion,
-        None => Expansion::default(),
-    };
-
-    let expansion_id = expansion.id;
+    let expansion_id = id;
 
     Ok(expansion_id)
 }
