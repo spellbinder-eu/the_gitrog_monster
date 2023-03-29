@@ -4,12 +4,13 @@ use sqlx::{FromRow, MySqlPool};
 use std::error::Error;
 
 #[derive(Debug, Default, FromRow)]
-struct Expansion {
-    id: String,
+pub struct Expansion {
+    pub id: String,
+    pub code: String,
 }
 
-pub async fn upsert_expansion(set: &Set, pool: &MySqlPool) -> Option<String> {
-    let code = &set.id.as_hyphenated().to_string();
+pub async fn upsert_expansion(set: &Set, pool: &MySqlPool) -> Result<String, Box<dyn Error>> {
+    let code = set.id.as_hyphenated().to_string();
 
     let expansion = fetch_expansion(code, &pool).await.unwrap();
 
@@ -23,15 +24,15 @@ pub async fn upsert_expansion(set: &Set, pool: &MySqlPool) -> Option<String> {
     Some(id)
 }
 
-async fn fetch_expansion(code: &String, pool: &MySqlPool) -> Result<Expansion, Box<dyn Error>> {
-    let query = "SELECT * FROM `expansion` WHERE `code` = ?";
+async fn fetch_expansion(code: String, pool: &MySqlPool) -> Result<Expansion, Box<dyn Error>> {
+    let query = "SELECT `id`, `code` FROM `expansion` WHERE `code` = ?";
 
-    let metacard = sqlx::query_as::<_, Expansion>(query)
+    let expansion = sqlx::query_as::<_, Expansion>(query)
         .bind(code)
         .fetch_optional(pool)
         .await?;
 
-    Ok(metacard.unwrap_or_default())
+    Ok(expansion.unwrap_or_default())
 }
 
 async fn create_expansion(set: &Set, pool: &MySqlPool) -> Result<String, Box<dyn Error>> {
