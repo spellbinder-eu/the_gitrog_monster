@@ -22,7 +22,14 @@ pub async fn upsert_expansion(set: &Set, pool: &MySqlPool) -> Result<String, Box
     Ok(expansion.id)
 }
 
-    Some(id)
+pub async fn preload_expansions(pool: &MySqlPool) -> Result<Vec<Expansion>, Box<dyn Error>> {
+    let query = "SELECT `id`, `code` FROM `expansion`";
+
+    let expansions = sqlx::query_as::<_, Expansion>(query)
+        .fetch_all(pool)
+        .await?;
+
+    Ok(expansions)
 }
 
 async fn fetch_expansion(code: String, pool: &MySqlPool) -> Result<Expansion, Box<dyn Error>> {
