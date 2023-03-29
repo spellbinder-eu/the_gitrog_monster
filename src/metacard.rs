@@ -8,34 +8,46 @@ struct MetaCard {
     scryfallId: String,
 }
 
-pub async fn upsert_card(card: &Card, expansion_id: &String, pool: &MySqlPool) -> () {
+pub async fn upsert_card(
+    card: &Card,
+    expansion_id: &String,
+    pool: &MySqlPool,
+) -> Result<(), Box<dyn Error>> {
     let scryfall_id = &card.id.as_hyphenated().to_string();
 
-    let meta_card = fetch_card(scryfall_id, &pool).await.unwrap();
+    let meta_card = match fetch_card(scryfall_id, &pool).await {
+        Some(meta_card) => meta_card,
+        None => MetaCard::default(),
+    };
 
     if meta_card.scryfallId.is_empty() {
-        create_card(&card, &expansion_id, &pool).await.unwrap();
+        create_card(&card, &expansion_id, &pool).await?;
     } else {
-        update_card(&card, &pool).await.unwrap();
+        update_card(&card, &pool).await?;
     }
+
+    Ok(())
 }
 
-async fn fetch_card(scryfall_id: &String, pool: &MySqlPool) -> Result<MetaCard, Box<dyn Error>> {
+async fn fetch_card(scryfall_id: &String, pool: &MySqlPool) -> Option<MetaCard> {
     let query = "SELECT * FROM `metacard` WHERE `scryfallId` = ?";
 
-    let metacard = sqlx::query_as::<_, MetaCard>(query)
+    let result = sqlx::query_as::<_, MetaCard>(query)
         .bind(scryfall_id)
         .fetch_optional(pool)
-        .await?;
+        .await;
 
-    Ok(metacard.unwrap_or_default())
+    match result {
+        Ok(option) => option,
+        Err(_) => None,
+    }
 }
 
 async fn create_card(
     card: &Card,
     expansion_id: &String,
     pool: &MySqlPool,
-) -> Result<u64, Box<dyn Error>> {
+) -> Result<(), Box<dyn Error>> {
     let query = "
         INSERT INTO metacard
         (id, scryfallId, cardmarketId, name, scryfallUri, imageUri, reserved, expansionId, collectorsNum, price, foilPrice)
@@ -108,7 +120,7 @@ async fn create_card(
     Ok(())
 }
 
-async fn update_card(card: &Card, pool: &MySqlPool) -> Result<u64, Box<dyn Error>> {
+async fn update_card(card: &Card, pool: &MySqlPool) -> Result<(), Box<dyn Error>> {
     let query = "UPDATE metacard SET price  = ?, foilPrice = ? WHERE scryfallId = ?";
 
     let default_price = get_default_price();
@@ -117,14 +129,14 @@ async fn update_card(card: &Card, pool: &MySqlPool) -> Result<u64, Box<dyn Error
     let price = card.prices.eur.as_ref().unwrap_or(&default_price);
     let foil_price = card.prices.eur_foil.as_ref().unwrap_or(&default_price);
 
-    let query_result = sqlx::query(query)
+    sqlx::query(query)
         .bind(price)
         .bind(foil_price)
         .bind(scryfall_id)
         .execute(pool)
         .await?;
 
-    Ok(query_result.rows_affected())
+    Ok(())
 }
 
 fn get_default_price() -> String {
