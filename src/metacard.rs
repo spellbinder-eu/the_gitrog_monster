@@ -53,7 +53,30 @@ async fn create_card(
     };
     let name = &card.name;
     let scryfall_uri = card.scryfall_uri.to_string();
-    let image_uri = card.image_uris["small"].to_string();
+
+    let has_small = card.image_uris.contains_key("small");
+    let has_normal = card.image_uris.contains_key("normal");
+    let has_large = card.image_uris.contains_key("large");
+
+    let image_uri = match true {
+        i if has_normal == i => card
+            .image_uris
+            .get("normal")
+            .expect("normal image exists")
+            .to_string(),
+        i if has_large == i => card
+            .image_uris
+            .get("large")
+            .expect("large image exists")
+            .to_string(),
+        i if has_small == i => card
+            .image_uris
+            .get("small")
+            .expect("Small image exists")
+            .to_string(),
+        _ => String::default(),
+    };
+
     let reserved = &card.reserved;
     let collector_number = &card.collector_number;
     let price = card.prices.eur.as_ref().unwrap_or(&default_price);
