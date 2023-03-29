@@ -69,13 +69,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    let cards = get_cards().await;
-    if cards.is_some() {
-        for unsafe_card in cards.unwrap() {
-            let opt_card = unsafe_card.ok();
+    let opt_cards = get_cards().await;
+    if opt_cards.is_some() {
+        let cards = opt_cards.unwrap();
+
+        for res_card in cards {
+            let opt_card = res_card.ok();
 
             if opt_card.is_some() {
                 let card = opt_card.unwrap();
+
+                if card.digital || card.cardmarket_id.is_none() {
+                    continue;
+                }
 
                 let set_code = card.set.get().to_owned();
                 let expansion_id = match set_code_to_expansion_id.get(&set_code) {
@@ -83,7 +89,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     None => String::default(),
                 };
 
-                crate::metacard::upsert_card(&card, &expansion_id, &pool).await;
+                crate::metacard::upsert_card(&card, &expansion_id, &pool).await?;
             }
         }
     }
