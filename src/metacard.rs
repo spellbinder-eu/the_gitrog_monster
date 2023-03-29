@@ -1,6 +1,6 @@
 use cuid;
 use scryfall::Card;
-use sqlx::{FromRow, MySqlPool};
+use sqlx::{mysql::MySqlDatabaseError, FromRow, MySqlPool};
 use std::error::Error;
 
 #[derive(Debug, Default, FromRow)]
@@ -95,9 +95,17 @@ async fn create_card(
         .bind(price)
         .bind(foil_price)
         .execute(pool)
-        .await?;
+        .await;
 
-    Ok(query_result.rows_affected())
+    match query_result {
+        Ok(result) => result,
+        Err(error) => match error {
+            MySqlDatabaseError => return Ok(()),
+            _ => panic!("Unexpected error while inserting card"),
+        },
+    };
+
+    Ok(())
 }
 
 async fn update_card(card: &Card, pool: &MySqlPool) -> Result<u64, Box<dyn Error>> {
