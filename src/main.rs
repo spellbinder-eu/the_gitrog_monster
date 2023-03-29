@@ -60,6 +60,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 continue;
             }
 
+            // @todo figure out why id isn't being set
+            // @todo batch inserts
             let id = match crate::expansion::upsert_expansion(&set, &pool).await {
                 Ok(code) => code,
                 Err(_) => panic!("Expansion id not returned"),
@@ -89,6 +91,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     None => String::default(),
                 };
 
+                // @todo batch inserts
                 crate::metacard::upsert_card(&card, &expansion_id, &pool).await?;
             }
         }

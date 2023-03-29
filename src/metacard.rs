@@ -43,6 +43,7 @@ async fn fetch_card(scryfall_id: &String, pool: &MySqlPool) -> Option<MetaCard> 
     }
 }
 
+// @todo handle more edge cases
 async fn create_card(
     card: &Card,
     expansion_id: &String,
@@ -109,6 +110,7 @@ async fn create_card(
         .execute(pool)
         .await;
 
+    // @todo better handle errors
     match query_result {
         Ok(result) => result,
         Err(error) => match error {
@@ -129,6 +131,7 @@ async fn update_card(card: &Card, pool: &MySqlPool) -> Result<(), Box<dyn Error>
     let price = card.prices.eur.as_ref().unwrap_or(&default_price);
     let foil_price = card.prices.eur_foil.as_ref().unwrap_or(&default_price);
 
+    // @todo handle errors
     sqlx::query(query)
         .bind(price)
         .bind(foil_price)
