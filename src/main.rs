@@ -91,6 +91,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     None => String::default(),
                 };
 
+                if expansion_id.is_empty() {
+                    continue;
+                }
+
                 // @todo batch inserts
                 crate::metacard::upsert_card(&card, &expansion_id, &pool).await?;
             }
