@@ -30,7 +30,7 @@ pub async fn upsert_card(
 }
 
 async fn fetch_card(scryfall_id: &String, pool: &MySqlPool) -> Option<MetaCard> {
-    let query = "SELECT * FROM `metacard` WHERE `scryfallId` = ?";
+    let query = "SELECT `scryfallId` FROM `metacard` WHERE `scryfallId` = ?";
 
     let result = sqlx::query_as::<_, MetaCard>(query)
         .bind(scryfall_id)
@@ -49,8 +49,8 @@ async fn create_card(
     pool: &MySqlPool,
 ) -> Result<(), Box<dyn Error>> {
     let query = "
-        INSERT INTO metacard
-        (id, scryfallId, cardmarketId, name, scryfallUri, imageUri, reserved, expansionId, collectorsNum, price, foilPrice)
+        INSERT INTO `metacard`
+        (`id`, `scryfallId`, `cardmarketId`, `name`, `scryfallUri`, `imageUri`, `reserved`, `expansionId`, `collectorsNum`, `price, `foilPrice`)
         VALUES
         (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     ";
@@ -121,7 +121,7 @@ async fn create_card(
 }
 
 async fn update_card(card: &Card, pool: &MySqlPool) -> Result<(), Box<dyn Error>> {
-    let query = "UPDATE metacard SET price  = ?, foilPrice = ? WHERE scryfallId = ?";
+    let query = "UPDATE `metacard` SET `price`  = ?, `foilPrice` = ? WHERE `scryfallId` = ?";
 
     let default_price = get_default_price();
 
