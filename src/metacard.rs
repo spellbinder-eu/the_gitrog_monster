@@ -1,6 +1,6 @@
 use cuid;
 use scryfall::Card;
-use sqlx::{mysql::MySqlDatabaseError, FromRow, MySqlPool};
+use sqlx::{FromRow, PgPool};
 use std::error::Error;
 
 #[derive(Debug, Default, FromRow)]
@@ -11,7 +11,7 @@ struct MetaCard {
 pub async fn upsert_card(
     card: &Card,
     expansion_id: &String,
-    pool: &MySqlPool,
+    pool: &PgPool,
 ) -> Result<(), Box<dyn Error>> {
     let scryfall_id = &card.id.as_hyphenated().to_string();
 
@@ -29,7 +29,7 @@ pub async fn upsert_card(
     Ok(())
 }
 
-async fn fetch_card(scryfall_id: &String, pool: &MySqlPool) -> Option<MetaCard> {
+async fn fetch_card(scryfall_id: &String, pool: &PgPool) -> Option<MetaCard> {
     let query = "SELECT `scryfallId` FROM `metacard` WHERE `scryfallId` = ?";
 
     let result = sqlx::query_as::<_, MetaCard>(query)
@@ -47,7 +47,7 @@ async fn fetch_card(scryfall_id: &String, pool: &MySqlPool) -> Option<MetaCard> 
 async fn create_card(
     card: &Card,
     expansion_id: &String,
-    pool: &MySqlPool,
+    pool: &PgPool,
 ) -> Result<(), Box<dyn Error>> {
     let query = "
         INSERT INTO `metacard`
@@ -113,16 +113,13 @@ async fn create_card(
     // @todo better handle errors
     match query_result {
         Ok(result) => result,
-        Err(error) => match error {
-            MySqlDatabaseError => return Ok(()),
-            _ => panic!("Unexpected error while inserting card"),
-        },
+        Err(_) => return Ok(()),
     };
 
     Ok(())
 }
 
-async fn update_card(card: &Card, pool: &MySqlPool) -> Result<(), Box<dyn Error>> {
+async fn update_card(card: &Card, pool: &PgPool) -> Result<(), Box<dyn Error>> {
     let query = "UPDATE `metacard` SET `price`  = ?, `foilPrice` = ? WHERE `scryfallId` = ?";
 
     let default_price = get_default_price();

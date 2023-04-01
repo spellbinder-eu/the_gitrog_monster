@@ -4,7 +4,7 @@ mod metacard;
 use dotenv::dotenv;
 use scryfall::bulk::default_cards;
 use scryfall::set::Set;
-use sqlx::mysql::MySqlPoolOptions;
+use sqlx::postgres::PgPoolOptions;
 use std::collections::HashMap;
 use std::error::Error;
 
@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let db =
         std::env::var("DATABASE_URL").expect("Expected database connection url in environment");
 
-    let pool = MySqlPoolOptions::new()
+    let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(db.as_str())
         .await

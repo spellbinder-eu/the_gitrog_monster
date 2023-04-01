@@ -1,6 +1,6 @@
 use cuid;
 use scryfall::Set;
-use sqlx::{FromRow, MySqlPool};
+use sqlx::{FromRow, PgPool};
 use std::error::Error;
 
 #[derive(Debug, Default, FromRow)]
@@ -9,7 +9,7 @@ pub struct Expansion {
     pub code: String,
 }
 
-pub async fn upsert_expansion(set: &Set, pool: &MySqlPool) -> Result<String, Box<dyn Error>> {
+pub async fn upsert_expansion(set: &Set, pool: &PgPool) -> Result<String, Box<dyn Error>> {
     let code = set.id.as_hyphenated().to_string();
 
     let expansion = fetch_expansion(code, &pool).await.unwrap();
@@ -22,7 +22,7 @@ pub async fn upsert_expansion(set: &Set, pool: &MySqlPool) -> Result<String, Box
     Ok(expansion.id)
 }
 
-pub async fn preload_expansions(pool: &MySqlPool) -> Result<Vec<Expansion>, Box<dyn Error>> {
+pub async fn preload_expansions(pool: &PgPool) -> Result<Vec<Expansion>, Box<dyn Error>> {
     let query = "SELECT `id`, `code` FROM `expansion`";
 
     let expansions = sqlx::query_as::<_, Expansion>(query)
@@ -32,7 +32,7 @@ pub async fn preload_expansions(pool: &MySqlPool) -> Result<Vec<Expansion>, Box<
     Ok(expansions)
 }
 
-async fn fetch_expansion(code: String, pool: &MySqlPool) -> Result<Expansion, Box<dyn Error>> {
+async fn fetch_expansion(code: String, pool: &PgPool) -> Result<Expansion, Box<dyn Error>> {
     let query = "SELECT `id`, `code` FROM `expansion` WHERE `code` = ?";
 
     let expansion = sqlx::query_as::<_, Expansion>(query)
@@ -43,7 +43,7 @@ async fn fetch_expansion(code: String, pool: &MySqlPool) -> Result<Expansion, Bo
     Ok(expansion.unwrap_or_default())
 }
 
-async fn create_expansion(set: &Set, pool: &MySqlPool) -> Result<String, Box<dyn Error>> {
+async fn create_expansion(set: &Set, pool: &PgPool) -> Result<String, Box<dyn Error>> {
     let query = "
         INSERT INTO `expansion`
         (`id`, `scryfallId`, `name`, `code`)
