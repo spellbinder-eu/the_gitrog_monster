@@ -14,7 +14,7 @@ pub async fn upsert_cards(set_code_to_expansion_id: &HashMap<String, String>, po
 
     let cards = opt_cards.unwrap();
     
-    for batch in &cards.into_iter().chunks(200) {
+    for batch in &cards.into_iter().chunks(500) {
         let mut card_tuples: Vec<(String, Card)> = Vec::new();
         for res_card in batch {
             let opt_card = res_card.ok();
@@ -179,8 +179,7 @@ async fn batch_upsert_cards(
     sqlx::query!(r#"INSERT INTO  "MetaCard"
         ("id", "scryfallId", "cardmarketId", "name", "scryfallUri", "reserved", "expansionId", "collectorsNum", "price", "foilPrice", "frontImageUri", "backImageUri")
         (SELECT * FROM UNNEST($1::text[], $2::text[], $3::int4[], $4::text[], $5::text[], $6::bool[], $7::text[], $8::text[], $9::float8[], $10::float8[], $11::text[], $12::text[]))
-        ON CONFLICT ("scryfallId") DO UPDATE SET "price" = EXCLUDED."price", "foilPrice" = EXCLUDED."foilPrice"
-        "#, 
+        ON CONFLICT ("scryfallId") DO UPDATE SET "price" = EXCLUDED."price", "foilPrice" = EXCLUDED."foilPrice";"#, 
         &ids[..], 
         &scryfall_ids[..], 
         &cardmarket_ids[..], 

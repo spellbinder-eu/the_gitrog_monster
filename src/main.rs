@@ -1,9 +1,10 @@
 mod database;
 mod scryfall;
-mod spellbinder;
+mod set;
+mod card;
 
-use crate::spellbinder::expansion::upsert_expansions;
-use crate::spellbinder::metacard::upsert_cards;
+use crate::set::upsert_sets;
+use crate::card::upsert_cards;
 use database::pool::create_pool;
 use dotenv::dotenv;
 use std::error::Error;
@@ -14,9 +15,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let pool = create_pool().await?;
 
-    let set_code_to_expansion_id = upsert_expansions(&pool).await;
+    let set_code_to_id_map = upsert_sets(&pool).await;
 
-    upsert_cards(&set_code_to_expansion_id, &pool).await;
+    upsert_cards(&set_code_to_id_map, &pool).await;
 
     Ok(())
 }
