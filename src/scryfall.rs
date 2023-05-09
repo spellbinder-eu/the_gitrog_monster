@@ -17,13 +17,13 @@ pub(crate) async fn fetch_sets() -> Option<Vec<Set>> {
 
 pub(crate) async fn fetch_cards(
 ) -> Option<impl Iterator<Item = Result<scryfall::Card, scryfall::Error>>> {
-    let cards = match default_cards().await {
+    
+
+    match default_cards().await {
         Ok(cards) => Some(cards),
         Err(e) => {
             eprintln!("Error fetching cards: {}", e);
             None
         }
-    };
-
-    cards
+    }
 }

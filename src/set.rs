@@ -1,7 +1,7 @@
 use crate::scryfall::fetch_sets;
 use sqlx::PgPool;
 use std::collections::HashMap;
-use cuid;
+
 use scryfall::Set;
 use std::error::Error;
 
@@ -39,11 +39,11 @@ pub async fn upsert_sets(pool: &PgPool) -> HashMap<String, String> {
     let real_sets_iter = sets.into_iter().filter(|set| !set.digital);
     let real_sets = Vec::from_iter(real_sets_iter);
 
-    let set_code_to_id_map =  batch_upsert_sets(real_sets, pool)
-        .await
-        .unwrap_or_default();
+    
 
-    set_code_to_id_map
+    batch_upsert_sets(real_sets, pool)
+        .await
+        .unwrap_or_default()
 }
 
 async fn batch_upsert_sets(sets: Vec<Set>, pool: &PgPool) -> Result<HashMap<String, String>, Box<dyn Error>> {

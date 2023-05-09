@@ -1,7 +1,7 @@
 use crate::scryfall::fetch_cards;
 use sqlx::PgPool;
 use std::collections::HashMap;
-use cuid;
+
 use scryfall::Card;
 use std::error::Error;
 use itertools::Itertools;
@@ -37,7 +37,7 @@ pub async fn upsert_cards(set_code_to_expansion_id: &HashMap<String, String>, po
             card_tuples.push((expansion_id, card));
         }
 
-        batch_upsert_cards(card_tuples, &pool)
+        batch_upsert_cards(card_tuples, pool)
             .await
             .unwrap_or_default();
     }
@@ -136,7 +136,7 @@ impl FormattedCard {
             None => String::new(),
         };
 
-        return (normal_image_uri, String::new());
+        (normal_image_uri, String::new())
     }
 }
 
